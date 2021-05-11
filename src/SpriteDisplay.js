@@ -3,6 +3,6 @@ import React from 'react';
 export default function SpriteDisplay({spriteUrl}) {
 
   return (
-    <img src={spriteUrl} />
+    <img height='250px' src={spriteUrl} />
   )
 }

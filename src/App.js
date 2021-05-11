@@ -22,6 +22,7 @@ function App() {
   const [pokedexId, setPokedexId] = useState();
   const [generation, setGeneration] = useState('');
   const [currentRandomPokedexId, setCurrentRandomPokedexId] = useState();
+  const [doubleDamageFrom, setDoubleDamageFrom] = useState();
 
   useEffect(() => {
     const pokedexId = Math.floor(Math.random() * 898);
@@ -30,15 +31,48 @@ function App() {
     // setCurrentRandomPokedexId(pokedexId);
     Promise.all([GetPokemonInfo(pokedexId), GetPokemonSpeciesInfo(pokedexId)])
       .then(results => {
-        setLoading(false);
+        
         const pokemon = results[0].data;
         setSpriteUrl(pokemon.sprites.front_default);
         setPokemonName(pokemon.name);
-        setPokemonTypes(pokemon.types.map(t => t.type.name));
+        const types = pokemon.types.map(t => t.type.name);
+        setPokemonTypes(types);
 
         const species = results[1].data;
         setGeneration(species.generation.name);
-      });
+
+        Promise.all(types.map(t => axios.get(`https://pokeapi.co/api/v2/type/${t}`)))
+        .then(r => {
+          setLoading(false);
+          let damageCalc = Object.fromEntries(r[0].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
+          let halfDamage = Object.fromEntries(r[0].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
+          Object.keys(halfDamage).forEach(x => {
+              damageCalc[x] = 0.5;
+          });
+          if (r[1]) {
+            let asdf = Object.fromEntries(r[1].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
+            Object.keys(asdf).forEach(x => {
+              if (damageCalc[x]) {
+                damageCalc[x] *= asdf[x];
+              } else {
+                damageCalc[x] = 2;
+              }
+            })
+            let asdf2 = Object.fromEntries(r[1].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
+            Object.keys(asdf2).forEach(x => {
+              if (damageCalc[x]) {
+                damageCalc[x] *= asdf2[x];
+              } else {
+                damageCalc[x] = 0.5;
+              }
+            })
+          }
+          console.log(damageCalc);
+        })
+      })
+      .catch(error => {
+        console.error(error);
+      })
   }, []);
 
   // useEffect(() => {
@@ -123,6 +157,9 @@ function App() {
         {generation.replace(/\b\w/g, l => l.toUpperCase())}
       </div>
       <PokemonTypes types={pokemonTypes}></PokemonTypes>
+      <div>
+        {/* Double Damge From *From only 1st type so far*: {doubleDamageFrom} */}
+      </div>
     </>
   );
 }
