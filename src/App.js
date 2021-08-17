@@ -41,30 +41,6 @@ function App() {
     newRandomPokemon();
   }, []);
 
-  // useEffect(() => {
-  //   setLoading(true);
-  //   let cancel;
-  //   axios.get(currentPageUrl, {
-  //     cancelToken: new axios.CancelToken(c => cancel = c)
-  //   })
-  //     .then(res => {
-  //       setLoading(false);
-  //       setPrevPageUrl(res.data.previous);
-  //       setNextPageUrl(res.data.next);
-  //       setListPokemon(res.data.results.map(p => p.name));
-  //     })
-
-  //   return cancel;
-  // }, [currentPageUrl]);
-
-  // useEffect(() => {
-  //   GetPokemonInfo(currentRandomPokedexId);
-  // }, [currentRandomPokedexId]);
-
-  // useEffect(() => {
-  //   setCurrentSpriteUrl(pokemon.sprites.front_default);
-  // }, [pokemon]);
-
   function newRandomPokemon() {
     const pokedexId = Math.floor(Math.random() * 898);
     // const pokedexId = 397;
@@ -84,40 +60,40 @@ function App() {
         setGeneration(species.generation.name);
 
         Promise.all(types.map(t => axios.get(`https://pokeapi.co/api/v2/type/${t}`)))
-          .then(r => {
+          .then(typeRelation => {
             setLoading(false);
-            let damageCalc = Object.fromEntries(r[0].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
-            const halfDamage = Object.fromEntries(r[0].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
+            let damageCalc = Object.fromEntries(typeRelation[0].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
+            const halfDamage = Object.fromEntries(typeRelation[0].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
             Object.keys(halfDamage).forEach(x => {
               damageCalc[x] = 0.5;
             });
-            const noDamage = Object.fromEntries(r[0].data.damage_relations.no_damage_from.map(x => [x.name, 0]));
+            const noDamage = Object.fromEntries(typeRelation[0].data.damage_relations.no_damage_from.map(x => [x.name, 0]));
             Object.keys(noDamage).forEach(x => {
               damageCalc[x] = noDamage[x];
             });
-            if (r[1]) {
-              let asdf = Object.fromEntries(r[1].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
-              Object.keys(asdf).forEach(x => {
+            if (typeRelation[1]) {
+              const secondTypeDoubleDamageFrom = Object.fromEntries(typeRelation[1].data.damage_relations.double_damage_from.map(x => [x.name, 2]));
+              Object.keys(secondTypeDoubleDamageFrom).forEach(x => {
                 if (damageCalc[x]) {
-                  damageCalc[x] *= asdf[x];
+                  damageCalc[x] *= secondTypeDoubleDamageFrom[x];
                 } else {
-                  damageCalc[x] = asdf[x];
+                  damageCalc[x] = secondTypeDoubleDamageFrom[x];
                 }
               })
-              let asdf2 = Object.fromEntries(r[1].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
-              Object.keys(asdf2).forEach(x => {
+              const secondTypeHalfDamageFrom = Object.fromEntries(typeRelation[1].data.damage_relations.half_damage_from.map(x => [x.name, 0.5]));
+              Object.keys(secondTypeHalfDamageFrom).forEach(x => {
                 if (damageCalc[x]) {
-                  damageCalc[x] *= asdf2[x];
+                  damageCalc[x] *= secondTypeHalfDamageFrom[x];
                 } else {
-                  damageCalc[x] = asdf2[x];
+                  damageCalc[x] = secondTypeHalfDamageFrom[x];
                 }
               })
-              const asdf3 = Object.fromEntries(r[1].data.damage_relations.no_damage_from.map(x => [x.name, 0]));
-              Object.keys(asdf3).forEach(x => {
+              const secondTypeNoDamageFrom = Object.fromEntries(typeRelation[1].data.damage_relations.no_damage_from.map(x => [x.name, 0]));
+              Object.keys(secondTypeNoDamageFrom).forEach(x => {
                 if (damageCalc[x]) {
-                  damageCalc[x] *= asdf3[x];
+                  damageCalc[x] *= secondTypeNoDamageFrom[x];
                 } else {
-                  damageCalc[x] = asdf3[x];
+                  damageCalc[x] = secondTypeNoDamageFrom[x];
                 }
               })
             }
@@ -175,14 +151,6 @@ function App() {
     return axios.get('https://pokeapi.co/api/v2/type/');
   }
 
-  // function gotoPrevPage() {
-  //   setCurrentPageUrl(prevPageUrl);
-  // }
-
-  // function gotoNextPage() {
-  //   setCurrentPageUrl(nextPageUrl);
-  // }
-
   function GetOptions(doubleDamageFrom, quadrupleDamageFrom, halfDamageFrom, oneFourthDamageFrom, noDamageFrom, types) {
     const superEffectiveDamageFrom = doubleDamageFrom.concat(quadrupleDamageFrom);
     const notEffectiveDamageFrom = halfDamageFrom.concat(oneFourthDamageFrom).concat(noDamageFrom);
@@ -230,12 +198,6 @@ function App() {
       <div>
       High Score: {highScore}
       </div>
-      {/* <PokemonList pokemon={listPokemon}></PokemonList>
-      <Pagination
-        gotoPrevPage={prevPageUrl ? gotoPrevPage : null}
-        gotoNextPage={nextPageUrl ? gotoNextPage : null}
-      >
-      </Pagination> */}
       <div>
         {spriteUrl && <SpriteDisplay spriteUrl={spriteUrl} />}
       </div>
